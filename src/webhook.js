@@ -92,7 +92,7 @@ function handleReactionAdded(event) {
     const reminderTime = new Date(now);
     if (DEV_MODE) {
       // 開発モード: スタンプ押下から5分後
-      reminderTime.setMinutes(reminderTime.getMinutes() + 5);
+      reminderTime.setMinutes(reminderTime.getMinutes() + 1);
     } else {
       // 本番モード: 翌日10:00
       reminderTime.setDate(reminderTime.getDate() + 1);

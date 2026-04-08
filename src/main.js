@@ -50,7 +50,7 @@ function remindPendingTasks() {
       const initTriggerDate = new Date(now);
       if (DEV_MODE) {
         // 開発モード: スタンプ押下から5分後
-        initTriggerDate.setMinutes(initTriggerDate.getMinutes() + 5);
+        initTriggerDate.setMinutes(initTriggerDate.getMinutes() + 1);
         console.log(`行 ${i+1}: [DEV] 初回リマインド時刻を5分後に設定しました (${initTriggerDate})`);
       } else {
         // 本番モード: 翌日10:00
