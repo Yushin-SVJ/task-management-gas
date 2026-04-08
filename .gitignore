@@ -1,1 +1,6 @@
-node_modules/\n.clasp.json\n.DS_Store
+node_modules/
+.clasp.json
+.DS_Store
+*.log
+login_output.txt
+.npm-local/

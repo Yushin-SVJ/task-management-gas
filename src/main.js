@@ -25,11 +25,16 @@ function remindPendingTasks() {
 
   // 朝（10時台）通知後 → 当日19:00、夜（19時台）通知後 → 翌日10:00
   let nextReminderTimeBase = new Date(now);
-  if (currentHour < 15) {
-    nextReminderTimeBase.setHours(19, 0, 0, 0); // 当日19:00
+  if (DEV_MODE) {
+    // 開発モード: 通知の1分後に次のリマインドを設定
+    nextReminderTimeBase.setMinutes(nextReminderTimeBase.getMinutes() + 1);
   } else {
-    nextReminderTimeBase.setDate(nextReminderTimeBase.getDate() + 1);
-    nextReminderTimeBase.setHours(10, 0, 0, 0); // 翌日10:00
+    if (currentHour < 15) {
+      nextReminderTimeBase.setHours(19, 0, 0, 0); // 当日19:00
+    } else {
+      nextReminderTimeBase.setDate(nextReminderTimeBase.getDate() + 1);
+      nextReminderTimeBase.setHours(10, 0, 0, 0); // 翌日10:00
+    }
   }
 
   const messagesByUser = {};
@@ -49,9 +54,9 @@ function remindPendingTasks() {
     if (!reminderTime || String(reminderTime).trim() === "") {
       const initTriggerDate = new Date(now);
       if (DEV_MODE) {
-        // 開発モード: スタンプ押下から5分後
+        // 開発モード: スタンプ押下から1分後
         initTriggerDate.setMinutes(initTriggerDate.getMinutes() + 1);
-        console.log(`行 ${i+1}: [DEV] 初回リマインド時刻を5分後に設定しました (${initTriggerDate})`);
+        console.log(`行 ${i+1}: [DEV] 初回リマインド時刻を1分後に設定しました (${initTriggerDate})`);
       } else {
         // 本番モード: 翌日10:00
         initTriggerDate.setDate(initTriggerDate.getDate() + 1);
