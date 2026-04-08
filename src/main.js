@@ -2,6 +2,10 @@
 const SLACK_ACCESS_TOKEN = "YOUR_SLACK_BOT_TOKEN"; // GASのスクリプトプロパティまたは直接書き換えて使用
 const SPREADSHEET_ID = "1XFduMSLrX9viD8pnWSEHTT-RRhHdy9uxePgytNNCYIU";
 
+// true: 開発モード（初回リマインドをスタンプ押下5分後に設定）
+// false: 本番モード（初回リマインドを翌日10:00に設定）
+const DEV_MODE = true;
+
 /**
  * 1日2回の通知スケジュール（朝・夕）
  */
@@ -18,13 +22,14 @@ function remindPendingTasks() {
 
   const now = new Date();
   const currentHour = now.getHours();
-  
+
+  // 朝（10時台）通知後 → 当日19:00、夜（19時台）通知後 → 翌日10:00
   let nextReminderTimeBase = new Date(now);
   if (currentHour < 15) {
-    nextReminderTimeBase.setHours(19, 0, 0, 0); // 本日19:00
+    nextReminderTimeBase.setHours(19, 0, 0, 0); // 当日19:00
   } else {
     nextReminderTimeBase.setDate(nextReminderTimeBase.getDate() + 1);
-    nextReminderTimeBase.setHours(8, 30, 0, 0); // 翌日8:30
+    nextReminderTimeBase.setHours(10, 0, 0, 0); // 翌日10:00
   }
 
   const messagesByUser = {};
@@ -33,7 +38,6 @@ function remindPendingTasks() {
     const row = data[i];
     const slackId = row[0];
     const messageLink = row[1];
-    const reactionTime = row[2];
     let reminderTime = row[3];
     const status = row[4];
 
@@ -41,16 +45,22 @@ function remindPendingTasks() {
 
     const normalizedLink = normalizeSlackUrl(messageLink);
 
-    // 1. リマインド時刻（D列）が空の場合の初期化（+5分）
-    if ((!reminderTime || String(reminderTime).trim() === "") && reactionTime) {
-      const initTriggerDate = new Date(reactionTime);
-      if (!isNaN(initTriggerDate.getTime())) {
+    // 1. リマインド時刻（D列）が空の場合の初期化
+    if (!reminderTime || String(reminderTime).trim() === "") {
+      const initTriggerDate = new Date(now);
+      if (DEV_MODE) {
+        // 開発モード: スタンプ押下から5分後
         initTriggerDate.setMinutes(initTriggerDate.getMinutes() + 5);
-        reminderTime = initTriggerDate;
-        sheet.getRange(i + 1, 4).setValue(reminderTime);
-        SpreadsheetApp.flush();
-        console.log(`行 ${i+1}: 初回登録を行いました (5分後: ${reminderTime})`);
+        console.log(`行 ${i+1}: [DEV] 初回リマインド時刻を5分後に設定しました (${initTriggerDate})`);
+      } else {
+        // 本番モード: 翌日10:00
+        initTriggerDate.setDate(initTriggerDate.getDate() + 1);
+        initTriggerDate.setHours(10, 0, 0, 0);
+        console.log(`行 ${i+1}: 初回リマインド時刻を翌日10:00に設定しました (${initTriggerDate})`);
       }
+      reminderTime = initTriggerDate;
+      sheet.getRange(i + 1, 4).setValue(reminderTime);
+      SpreadsheetApp.flush();
     }
 
     if (reminderTime) {

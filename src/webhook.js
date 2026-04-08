@@ -89,7 +89,15 @@ function handleReactionAdded(event) {
     }
 
     const now = new Date();
-    const reminderTime = new Date(now.getTime() + 5 * 60 * 1000);
+    const reminderTime = new Date(now);
+    if (DEV_MODE) {
+      // 開発モード: スタンプ押下から5分後
+      reminderTime.setMinutes(reminderTime.getMinutes() + 5);
+    } else {
+      // 本番モード: 翌日10:00
+      reminderTime.setDate(reminderTime.getDate() + 1);
+      reminderTime.setHours(10, 0, 0, 0);
+    }
 
     if (foundRowIndex !== -1) {
       // 重複あり: 既存行を更新
