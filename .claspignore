@@ -1,0 +1,7 @@
+*.sh
+.clasp.*.json
+node_modules/
+package.json
+package-lock.json
+login_output.txt
+.gitignore

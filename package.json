@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "description": "Slack Task Reminder GAS",
   "main": "src/main.js",
+  "scripts": {
+    "env": "./current-env.sh",
+    "switch:dev": "./switch-dev.sh",
+    "switch:prod": "./switch-prod.sh",
+    "deploy:dev": "npm run switch:dev && clasp push",
+    "deploy:prod": "npm run switch:prod && clasp push"
+  },
   "devDependencies": {
     "@google/clasp": "^2.4.2"
   }

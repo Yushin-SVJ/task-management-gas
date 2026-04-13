@@ -1,10 +1,9 @@
-// ↓ ご使用のSlack Bot User OAuth Token (xoxb-...) に適宜書き換えてください
-const SLACK_ACCESS_TOKEN = "YOUR_SLACK_BOT_TOKEN"; // GASのスクリプトプロパティまたは直接書き換えて使用
-const SPREADSHEET_ID = "1XFduMSLrX9viD8pnWSEHTT-RRhHdy9uxePgytNNCYIU";
+const SLACK_ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty('SLACK_ACCESS_TOKEN');
+const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
 
 // true: 開発モード（初回リマインドをスタンプ押下5分後に設定）
 // false: 本番モード（初回リマインドを翌日10:00に設定）
-const DEV_MODE = true;
+const DEV_MODE = PropertiesService.getScriptProperties().getProperty('DEV_MODE') === 'true';
 
 /**
  * 1日2回の通知スケジュール（朝・夕）
