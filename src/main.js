@@ -1,3 +1,7 @@
+/**
+ * Slack Task Reminder GAS
+ * Version: 1.1.0
+ */
 const SLACK_ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty('SLACK_ACCESS_TOKEN');
 const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
 
