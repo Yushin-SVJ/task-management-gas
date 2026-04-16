@@ -40,10 +40,12 @@ function remindPendingTasks() {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const slackId = row[0];
-    const messageLink = row[1];
-    let reminderTime = row[3];
-    const status = row[4];
+    const slackId = row[0]; // A: 担当者SlackID
+    const messageLink = row[1]; // B: メッセージリンク
+    const requestChannel = row[2]; // C: 依頼チャンネル
+    const taskCreator = row[3]; // D: タスク化した人
+    let reminderTime = row[5]; // F: リマインド日時
+    const status = row[6]; // G: ステータス
 
     if (status === "完了") continue;
 
@@ -63,7 +65,7 @@ function remindPendingTasks() {
         console.log(`行 ${i+1}: 初回リマインド時刻を翌日10:00に設定しました (${initTriggerDate})`);
       }
       reminderTime = initTriggerDate;
-      sheet.getRange(i + 1, 4).setValue(reminderTime);
+      sheet.getRange(i + 1, 6).setValue(reminderTime);
       SpreadsheetApp.flush();
     }
 
@@ -112,8 +114,8 @@ function remindPendingTasks() {
 
       if (resData.ok) {
         updateRows.forEach(rowNum => {
-          sheet.getRange(rowNum, 4).setValue(nextReminderTimeBase);
-          sheet.getRange(rowNum, 6).setValue("配信成功");
+          sheet.getRange(rowNum, 6).setValue(nextReminderTimeBase);
+          sheet.getRange(rowNum, 8).setValue("配信成功");
         });
         SpreadsheetApp.flush();
       } else {
@@ -220,6 +222,32 @@ function fetchMessageText(channel, ts) {
     console.warn(`メッセージ取得失敗: ${err.message}`);
   }
   return null;
+}
+
+/**
+ * Slack API を使ってユーザーの表示名を取得する
+ */
+function fetchSlackUserName(userId) {
+  if (!userId) return "";
+  const url = `https://slack.com/api/users.info?user=${userId}`;
+  const options = {
+    headers: { "Authorization": `Bearer ${SLACK_ACCESS_TOKEN}` },
+    muteHttpExceptions: true
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const data = JSON.parse(response.getContentText());
+    if (data.ok && data.user) {
+      // display_name が設定されていればそれを優先、なければ real_name
+      return data.user.profile.display_name || data.user.real_name || data.user.name;
+    } else {
+      console.warn(`Slack ユーザー取得エラー: ${data.error} (userId: ${userId})`);
+    }
+  } catch (err) {
+    console.warn(`ユーザー取得失敗: ${err.message}`);
+  }
+  return userId; // 取得に失敗した場合はそのままIDを返す
 }
 
 /**

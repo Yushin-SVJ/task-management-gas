@@ -9,6 +9,18 @@ function doPost(e) {
   }
 
   if (json.type === "event_callback") {
+    const eventId = json.event_id;
+    const cache = CacheService.getScriptCache();
+    // すでに処理中のイベントID（Slackからのリトライ）なら無視する
+    if (eventId && cache.get(eventId)) {
+      console.log(`[重複排除] リトライをスキップ: ${eventId}`);
+      return ContentService.createTextOutput("ok");
+    }
+    // 10分間キャッシュに保存
+    if (eventId) {
+      cache.put(eventId, "true", 600);
+    }
+
     const event = json.event;
 
     if (event.type === "reaction_added" && event.reaction === "かくにん") {
@@ -44,7 +56,7 @@ function handleCompleted(event) {
 
     for (let i = 1; i < data.length; i++) {
       if (normalizeSlackUrl(data[i][1]) === targetUrl) {
-        sheet.getRange(i + 1, 5).setValue("完了");
+        sheet.getRange(i + 1, 7).setValue("完了");
         SpreadsheetApp.flush();
         console.log(`行 ${i + 1} を完了に更新しました`);
         break;
@@ -99,25 +111,31 @@ function handleReactionAdded(event) {
       reminderTime.setHours(10, 0, 0, 0);
     }
 
+    const userName = fetchSlackUserName(slackId); // 新しく追加
+
     if (foundRowIndex !== -1) {
       // 重複あり: 既存行を更新
       console.log(`既存URLを更新: 行 ${foundRowIndex}`);
-      sheet.getRange(foundRowIndex, 1).setValue(slackId);
-      sheet.getRange(foundRowIndex, 2).setValue(targetUrl);     // B列も正規化済みURLに上書き
-      sheet.getRange(foundRowIndex, 3).setValue(now);
-      sheet.getRange(foundRowIndex, 4).setValue(reminderTime);
-      sheet.getRange(foundRowIndex, 5).setValue("進行中");
-      sheet.getRange(foundRowIndex, 6).clearContent();
+      sheet.getRange(foundRowIndex, 1).setValue(slackId);       // A: 担当者SlackID
+      sheet.getRange(foundRowIndex, 2).setValue(targetUrl);     // B: メッセージリンク
+      sheet.getRange(foundRowIndex, 3).setValue(channel);       // C: 依頼チャンネル
+      sheet.getRange(foundRowIndex, 4).setValue(userName);      // D: タスク化した人
+      sheet.getRange(foundRowIndex, 5).setValue(now);           // E: 登録日時
+      sheet.getRange(foundRowIndex, 6).setValue(reminderTime);  // F: リマインド日時
+      sheet.getRange(foundRowIndex, 7).setValue("進行中");       // G: ステータス
+      sheet.getRange(foundRowIndex, 8).clearContent();          // H: 通知結果
     } else {
       // 重複なし: 新規追加
       console.log(`新規URLを追加: ${targetUrl}`);
       sheet.appendRow([
-        slackId,
-        targetUrl,
-        now,
-        reminderTime,
-        "進行中",
-        ""
+        slackId,         // A: 担当者SlackID
+        targetUrl,       // B: メッセージリンク
+        channel,         // C: 依頼チャンネル
+        userName,        // D: タスク化した人
+        now,             // E: 登録日時
+        reminderTime,    // F: リマインド日時
+        "進行中",         // G: ステータス
+        ""               // H: 通知結果
       ]);
     }
     SpreadsheetApp.flush();
